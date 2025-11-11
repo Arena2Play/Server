@@ -2,12 +2,10 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('./models/User');
 const Investment = require('./models/Investment');
-
-const MONGO = process.env.MONGO_URI || 'mongodb://localhost:27017/investmentdb';
+const MONGO = process.env.MONGO_URI;
 mongoose.connect(MONGO, { useNewUrlParser:true, useUnifiedTopology:true })
   .then(()=> seed())
   .catch(err=> console.error(err));
-
 async function seed(){
   try{
     await User.deleteMany({});

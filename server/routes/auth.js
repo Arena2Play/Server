@@ -2,8 +2,6 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-
-// register
 router.post('/register', async (req, res)=>{
   try{
     const { name, email, password } = req.body;
@@ -14,8 +12,6 @@ router.post('/register', async (req, res)=>{
     res.json({ ok:true, message: 'Registered' });
   }catch(err){ res.status(500).json({ ok:false, error: err.message }); }
 });
-
-// login
 router.post('/login', async (req, res)=>{
   try{
     const { email, password } = req.body;
@@ -28,5 +24,4 @@ router.post('/login', async (req, res)=>{
     res.json({ ok:true, token });
   }catch(err){ res.status(500).json({ ok:false, error: err.message }); }
 });
-
 module.exports = router;

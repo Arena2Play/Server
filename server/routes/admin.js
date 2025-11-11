@@ -4,8 +4,6 @@ const { protect, adminOnly } = require('../middleware/auth');
 const User = require('../models/User');
 const Investment = require('../models/Investment');
 const Payment = require('../models/Payment');
-
-// dashboard stats
 router.get('/stats', protect, adminOnly, async (req, res)=>{
   const totalUsers = await User.countDocuments();
   const totalInvestments = await Investment.countDocuments();
@@ -17,11 +15,8 @@ router.get('/stats', protect, adminOnly, async (req, res)=>{
   const totalPayments = await Payment.countDocuments();
   res.json({ ok:true, totalUsers, totalInvestments, totalAmount, totalPayments });
 });
-
-// list investments (admin)
 router.get('/investments', protect, adminOnly, async (req, res)=>{
   const invs = await Investment.find().populate('user','name email');
   res.json({ ok:true, invs });
 });
-
 module.exports = router;

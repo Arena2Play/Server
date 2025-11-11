@@ -3,8 +3,6 @@ const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || '');
 const { protect } = require('../middleware/auth');
 const Payment = require('../models/Payment');
-
-// create Stripe payment intent (client sends amount in cents)
 router.post('/stripe/create-payment-intent', protect, async (req, res)=>{
   try{
     const { amount, currency = 'usd' } = req.body;
@@ -14,14 +12,11 @@ router.post('/stripe/create-payment-intent', protect, async (req, res)=>{
       currency,
       metadata: { userId: req.user._id.toString() }
     });
-    // create payment record (pending)
     const pay = new Payment({ user: req.user._id, amount: amount/100, method: 'stripe', status: 'pending', meta: { paymentIntentId: paymentIntent.id } });
     await pay.save();
     res.json({ ok:true, clientSecret: paymentIntent.client_secret, paymentId: pay._id });
   }catch(err){ console.error(err); res.status(500).json({ ok:false, error: err.message }); }
 });
-
-// Stripe webhook endpoint (use raw body in production with signature check)
 router.post('/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res)=>{
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -30,22 +25,15 @@ router.post('/stripe/webhook', express.raw({ type: 'application/json' }), async 
     if (webhookSecret) {
       event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
     } else {
-      event = req.body; // WARNING: only for local testing without signature
+      event = req.body;
     }
-  }catch(err){
-    console.error('Webhook error', err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  // handle the event
+  }catch(err){ console.error('Webhook error', err.message); return res.status(400).send(`Webhook Error: ${err.message}`); }
   if (event.type === 'payment_intent.succeeded' || event.type === 'payment_intent.payment_succeeded') {
     const pi = event.data.object;
-    // find Payment by meta.paymentIntentId
     const payment = await Payment.findOne({ 'meta.paymentIntentId': pi.id });
     if (payment) {
       payment.status = 'succeeded';
       await payment.save();
-      // Optional: increment user balance for internal wallet
       const User = require('../models/User');
       const user = await User.findById(payment.user);
       if (user) {
@@ -54,8 +42,6 @@ router.post('/stripe/webhook', express.raw({ type: 'application/json' }), async 
       }
     }
   }
-
   res.json({ received: true });
 });
-
 module.exports = router;

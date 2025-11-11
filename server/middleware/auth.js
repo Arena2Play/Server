@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-
 exports.protect = async (req, res, next)=>{
   try{
     const token = req.cookies.token || (req.headers.authorization && req.headers.authorization.split(' ')[1]);
@@ -10,7 +9,6 @@ exports.protect = async (req, res, next)=>{
     next();
   }catch(err){ res.status(401).json({ ok:false, error: 'Token invalid' }); }
 }
-
 exports.adminOnly = (req, res, next)=>{
   if(req.user?.role !== 'admin') return res.status(403).json({ ok:false, error: 'Admin only' });
   next();
